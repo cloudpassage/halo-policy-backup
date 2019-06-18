@@ -3,18 +3,21 @@ import sys
 import api
 import fn
 import sanity
+import yaml
 
 
 
 def main(argv):
+    usagetext = ("halo-policy-backup.py -c CONFIGFILE (OPTIONAL)" +
+                 "Please specify your file name, if not using the default config file\n" +
+                 "NOTE: Format of config file should follow the default config file\n")
+
     # Parse args from CLI
-    cli = parse_cli(argv)
+    cli = parse_cli(argv, usagetext)
     # Dictionary of config items
     config = parse_config(cli)
     # Error Message
-    usagetext = ("halo-policy-backup.py -c CONFIGFILE (OPTIONAL)" +
-        "Please specify your file name, if not using the default config file\n" +
-        "NOTE: Format of config file should follow the default config file\n")
+
 
     # Sanity Checks
     # Check if the directory for each policy exist
@@ -36,34 +39,35 @@ def main(argv):
     if localsuccess == False:
         sys.exit("Error message: Failure to write locally!")
     else:
-        print "Updated files written to disk."
+        print("Updated files written to disk.")
         remotesuccess = fn.remotepush(config["repo_base_path"], config["repo_commit_comment"])
-        print remotesuccess
+        print(remotesuccess)
+
 
 def parse_config(cli):
     config = {}
     for opt in cli:
         if opt == "config":
-            execfile(cli[opt], config)
+            config = yaml.load(cli[opt], Loader=yaml.SafeLoader)['defaults']
     config['prox'] = {'host': config['proxy_host'], 'port': config['proxy_port'] }
     return(config)
 
-def parse_cli(argv):
+def parse_cli(argv, usagetext):
     cli_stuff = {}
     try:
         opts, args = getopt.getopt(argv, "hc", ["configFile="])
     except:
-        print usagetext
+        print(usagetext)
 
     if len(opts) == 0:
-        cli_stuff["config"] = "config.conf"
+        cli_stuff["config"] = "config.yml"
     else:
         for opt, arg in opts:
             if opt == '-h':
-                print usagetext
+                print(usagetext)
             elif opt in ("-c", "--configFile"):
                 cli_stuff["config"] = arg
-    print cli_stuff
+    print(cli_stuff)
     return(cli_stuff)
 
 if __name__ == "__main__":

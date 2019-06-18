@@ -1,8 +1,9 @@
 # Configuration items go here
-api_host = "api.cloudpassage.com"
-api_key = "542b1c39"
-api_secret = "b851aa0cc842848fb2c1915a42d5949e"
-repo_base_path = ""
-repo_commit_comment = ""
-proxy_host = ""
-proxy_port = ""
+defaults:
+  api_host: "api.cloudpassage.com"
+  api_key: ""
+  api_secret: ""
+  repo_base_path: ""
+  repo_commit_comment: ""
+  proxy_host: ""
+  proxy_port: ""

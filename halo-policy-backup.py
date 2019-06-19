@@ -1,9 +1,11 @@
 import getopt
 import sys
-import api
 import fn
 import sanity
 import yaml
+import os
+import re
+import cloudpassage
 
 
 
@@ -29,11 +31,18 @@ def main(argv):
     if goodconfig == False:
         sys.exit("Error message: Please make sure you have filled all the required information in config file")
 
-    # Get API key, set in config structure
-    config["auth_token"] = api.get_auth_token(config["api_host"], config["api_key"], config["api_secret"], config["prox"])
+    # Get integration string
+    integration = get_integration_string()
+    # Get Session
+    session = cloudpassage.HaloSession(config["api_key"],
+                                       config["api_secret"],
+                                       api_host=config["api_host"],
+                                       proxy_host=config["proxy_host"],
+                                       proxy_port=config["proxy_port"],
+                                       integration_string=integration)
+
     # Get the policy stuff
-    infobundle = fn.get_all_policies(config["api_host"], config["auth_token"], config["prox"])
-    finalbundle = fn.get_specific(config["api_host"], config["auth_token"],config["prox"], config["repo_base_path"],infobundle)
+    infobundle = fn.get_all_policies(session, config["repo_base_path"])
     # Write files to disk, return bool
     localsuccess = fn.localcommit(config["repo_base_path"])
     if localsuccess == False:
@@ -48,8 +57,8 @@ def parse_config(cli):
     config = {}
     for opt in cli:
         if opt == "config":
-            config = yaml.load(cli[opt], Loader=yaml.SafeLoader)['defaults']
-    config['prox'] = {'host': config['proxy_host'], 'port': config['proxy_port'] }
+            with open(cli[opt], 'r') as config_file:
+                config = yaml.load(config_file, Loader=yaml.SafeLoader)['defaults']
     return(config)
 
 def parse_cli(argv, usagetext):
@@ -69,6 +78,20 @@ def parse_cli(argv, usagetext):
                 cli_stuff["config"] = arg
     print(cli_stuff)
     return(cli_stuff)
+
+def get_integration_string():
+    """Return integration string for this tool."""
+    return "halo-policy-backup/%s" % get_tool_version()
+
+def get_tool_version():
+    """Get version of this tool from the __init__.py file."""
+    here_path = os.path.abspath(os.path.dirname(__file__))
+    init_file = os.path.join(here_path, "__init__.py")
+    ver = 0
+    with open(init_file, 'r') as i_f:
+        rx_compiled = re.compile(r"\s*__version__\s*=\s*\"(\S+)\"")
+        ver = rx_compiled.search(i_f.read()).group(1)
+    return ver
 
 if __name__ == "__main__":
     main(sys.argv[1:])

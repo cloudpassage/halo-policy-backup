@@ -1,0 +1,9 @@
+# Configuration items go here
+defaults:
+  api_host: "api.cloudpassage.com"
+  api_key: ""
+  api_secret: ""
+  repo_base_path: ""
+  repo_commit_comment: ""
+  proxy_host: ""
+  proxy_port: ""
